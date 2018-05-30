@@ -1,0 +1,30 @@
+[
+  {
+    "ParameterKey": "KeyPair",
+    "ParameterValue": "OctopusDemoOregon"
+  },
+  {
+    "ParameterKey": "WebInstanceName",
+    "ParameterValue": "WebInstance-#{Octopus.Environment.Name}"
+  },
+  {
+    "ParameterKey": "WebInstanceTypeParameter",
+    "ParameterValue": "t2.large"
+  },
+  {
+    "ParameterKey": "AvailabilityZoneParameter",
+    "ParameterValue": "us-west-2a"
+  },
+  {
+    "ParameterKey": "DatabaseName",
+    "ParameterValue": "#{DatabaseName}"
+  },
+  {
+    "ParameterKey": "DatabaseUsername",
+    "ParameterValue": "#{DatabaseUser}"
+  },
+  {
+    "ParameterKey": "DatabasePassword",
+    "ParameterValue": "#{DatabasePassword}"
+  }
+]
