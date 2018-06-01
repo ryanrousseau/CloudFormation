@@ -4,6 +4,10 @@
     "ParameterValue": "OctopusDemoOregon"
   },
   {
+    "ParameterKey": "WebInstanceId",
+    "ParameterValue": "#{WebInstanceId}"
+  },
+  {
     "ParameterKey": "WebInstanceName",
     "ParameterValue": "WebInstance-#{Octopus.Environment.Name}"
   },
@@ -12,8 +16,12 @@
     "ParameterValue": "t2.large"
   },
   {
-    "ParameterKey": "AvailabilityZoneParameter",
-    "ParameterValue": "us-west-2a"
+    "ParameterKey": "AvailabilityZone1Parameter",
+    "ParameterValue": "#{AvailabilityZone1}"
+  },
+  {
+    "ParameterKey": "AvailabilityZone2Parameter",
+    "ParameterValue": "#{AvailabilityZone2}"
   },
   {
     "ParameterKey": "DatabaseName",

@@ -2,6 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
   KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
+  WebInstanceId:
+    Tyle: String
+    Default: ami-f3dcbc8b
   WebInstanceName:
     Type: String
     Default: WebInstance
@@ -63,14 +66,14 @@ Parameters:
       - cr1.8xlarge
       - cc2.8xlarge
       - cg1.4xlarge
-  AvailabilityZoneParameter:
+  AvailabilityZone1Parameter:
     Description: Enter availability zone. Default is us-west-2a.
     Type: String
     Default: us-west-2a
-    AllowedValues:
-      - us-west-2a
-      - us-west-2b
-      - us-west-2c
+  AvailabilityZone2Parameter:
+    Description: Enter availability zone. Default is us-west-2b.
+    Type: String
+    Default: us-west-2b
   DatabaseName:
     Description: Enter Database Name
     Type: String
@@ -111,14 +114,14 @@ Resources:
   SubnetA:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: !Ref AvailabilityZoneParameter
+      AvailabilityZone: !Ref AvailabilityZone1Parameter
       VpcId: !Ref VPC
       CidrBlock: 10.0.0.0/24
       MapPublicIpOnLaunch: true
   SubnetB:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: us-west-2b
+      AvailabilityZone: !Ref AvailabilityZone2Parameter
       VpcId: !Ref VPC
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
@@ -208,7 +211,7 @@ Resources:
   WebInstance:
     Type: 'AWS::EC2::Instance'
     Properties:
-      ImageId: ami-f3dcbc8b
+      ImageId: !Ref WebInstanceId
       SubnetId: !Ref SubnetA
       InstanceType:
         Ref: WebInstanceTypeParameter
