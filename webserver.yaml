@@ -330,7 +330,4 @@ Outputs:
       - PublicDnsName
   InstanceId:
     Description: Web instance id
-    Value:
-      Fn::GetAtt:
-      - WebInstance
-      - InstanceID
+    Value: !Ref WebInstance
