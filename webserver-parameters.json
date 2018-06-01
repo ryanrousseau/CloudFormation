@@ -13,7 +13,7 @@
   },
   {
     "ParameterKey": "WebInstanceTypeParameter",
-    "ParameterValue": "t2.large"
+    "ParameterValue": "t2.micro"
   },
   {
     "ParameterKey": "AvailabilityZone1Parameter",
