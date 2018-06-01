@@ -329,8 +329,8 @@ Outputs:
       - WebInstance
       - PublicDnsName
   InstanceId:
-    Description: Web instance endpoint
+    Description: Web instance id
     Value:
       Fn::GetAtt:
       - WebInstance
-      - InstanceId
+      - InstanceID
