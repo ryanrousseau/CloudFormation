@@ -1,0 +1,294 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+  WebInstanceId:
+    Type: String
+    Default: ami-f3dcbc8b
+  WebInstanceName:
+    Type: String
+    Default: WebInstance
+  WebInstanceTypeParameter:
+    Type: String
+    Default: t2.micro
+  AvailabilityZone1Parameter:
+    Description: Enter availability zone. Default is us-west-2a.
+    Type: String
+    Default: us-west-2a
+  AvailabilityZone2Parameter:
+    Description: Enter availability zone. Default is us-west-2b.
+    Type: String
+    Default: us-west-2b
+  DatabaseName:
+    Description: Enter Database Name
+    Type: String
+  DatabaseUsername:
+    AllowedPattern: "[a-zA-Z0-9]+"
+    ConstraintDescription: must contain only alphanumeric characters.
+    Description: The database admin account user name.
+    MaxLength: '16'
+    MinLength: '1'
+    Type: String
+  DatabasePassword:
+    AllowedPattern: "^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)"
+    ConstraintDescription: Must contain only alphanumeric characters with at least one capital letter and one number.
+    Description: The database admin account password.
+    MaxLength: '41'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        -
+          Key: Name
+          Value: OctopusDemoVPC
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  SubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1Parameter
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  InternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGateway
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref RouteTable
+  SubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetA
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable RDP access
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '3389'
+        ToPort: '3389'
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: '10933'
+        ToPort: '10933'
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp: '0.0.0.0/0'
+  WebInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref WebInstanceId
+      SubnetId: !Ref SubnetA
+      InstanceType:
+        Ref: WebInstanceTypeParameter
+      SecurityGroupIds:
+        - Ref: InstanceSecurityGroup
+      KeyName: !Ref KeyPair
+      Tags:
+        -
+          Key: Name
+          Value: !Ref WebInstanceName
+      UserData:
+        Fn::Base64: !Join
+          - ''
+          -
+            - |-
+              <powershell>
+              Start-Transcript -path "C:\Bootstrap.txt" -append
+
+              Write-Host "Configure IIS"
+              Dism /Online /Enable-Feature /FeatureName:IIS-ASPNET /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-ASPNET45 /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-CertProvider /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-HttpRedirect /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-BasicAuthentication /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-WebSockets /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-ApplicationInit /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-CustomLogging /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-ManagementService /All
+              Dism /Online /Enable-Feature /FeatureName:WCF-Services45 /All
+              Dism /Online /Enable-Feature /FeatureName:WCF-HTTP-Activation45 /All
+              Dism /Online /Enable-Feature /FeatureName:IIS-WindowsAuthentication /All
+              Dism /online /enable-feature /featurename:NetFX3 /All
+
+              Write-Output Delete Default Web Site
+              Remove-WebSite -Name "Default Web Site"
+
+              $tentacleDownloadPath = "https://octopus.com/downloads/latest/WindowsX64/OctopusTentacle"
+              $octopusServerUrl = "#{OctopusUrl}"
+              $octopusApiKey = "#{OctopusApiKey}"
+              $octopusServerThumbprint = "#{OctopusServerThumbprint}"
+              $registerInEnvironments = "#{OctopusEnvironment}"
+              $registerInRoles = "#{OctopusRoles}"
+              $tentacleListenPort = 10933
+              $tentacleHomeDirectory = "C:\Octopus"
+              $tentacleAppDirectory = "C:\Octopus\Applications"
+              $tentacleConfigFile = "C:\Octopus\Tentacle\Tentacle.config"
+
+              $tentaclePath = "C:\Tools\Octopus.Tentacle.msi"
+
+              function Get-MyPublicIPAddress {
+                  # Get Ip Address of Machine
+                  Write-Host "Getting public IP address"
+                  $ipAddress = Invoke-RestMethod http://ipinfo.io/json | Select-Object -exp ip
+                  return $ipAddress
+              }
+
+              function Get-FileFromServer
+              {
+                param (
+                  [string]$url,
+                  [string]$saveAs
+                )
+
+                Write-Host "Downloading $url to $saveAs"
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $downloader = new-object System.Net.WebClient
+                $downloader.DownloadFile($url, $saveAs)
+              }
+
+              function Install-Tentacle
+              {
+                param (
+                   [Parameter(Mandatory=$True)]
+                   [string]$apiKey,
+                   [Parameter(Mandatory=$True)]
+                   [System.Uri]$octopusServerUrl,
+                   [Parameter(Mandatory=$True)]
+                   [string]$environment,
+                   [Parameter(Mandatory=$True)]
+                   [string]$roles
+                )
+
+                Write-Output "Beginning Tentacle installation"
+
+                Write-Output "Downloading latest Octopus Tentacle MSI..."
+
+                $roles = $roles -split "," | foreach { "--role `"$($_.Trim())`"" }
+                $roles = $roles -join " "
+
+                Write-Output "Roles = $roles"
+
+                $tentaclePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(".\Tentacle.msi")
+                if ((test-path $tentaclePath) -ne $true) {
+                  Get-FileFromServer $tentacleDownloadPath $tentaclePath
+                }
+
+                Write-Output "Installing MSI"
+                $msiExitCode = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i Tentacle.msi /quiet" -Wait -Passthru).ExitCode
+                Write-Output "Tentacle MSI installer returned exit code $msiExitCode"
+                if ($msiExitCode -ne 0) {
+                  throw "Installation aborted"
+                }
+
+                Write-Output "Open port $tentacleListenPort on Windows Firewall"
+                & netsh.exe firewall add portopening TCP $tentacleListenPort "Octopus Tentacle"
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed when modifying firewall rules"
+                }
+
+                $ipAddress = Get-MyPublicIPAddress
+                $ipAddress = $ipAddress.Trim()
+
+                Write-Output "Public IP address: " + $ipAddress
+
+                Write-Output "Configuring and registering Tentacle"
+
+                Set-Location "${env:ProgramFiles}\Octopus Deploy\Tentacle"
+
+                & .\tentacle.exe create-instance --instance "Tentacle" --config $tentacleConfigFile --console | Write-Host
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed on create-instance"
+                }
+                & .\tentacle.exe configure --instance "Tentacle" --home $tentacleHomeDirectory --console | Write-Host
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed on configure"
+                }
+                & .\tentacle.exe configure --instance "Tentacle" --app $tentacleAppDirectory --console | Write-Host
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed on configure"
+                }
+                & .\tentacle.exe configure --instance "Tentacle" --port $tentacleListenPort --console | Write-Host
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed on configure"
+                }
+                & .\tentacle.exe new-certificate --instance "Tentacle" --console | Write-Host
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed on creating new certificate"
+                }
+                & .\tentacle.exe configure --instance "Tentacle" --trust $octopusServerThumbprint --console  | Write-Host
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed on configure"
+                }
+                
+                $cmd = "& .\tentacle.exe register-with --instance `"Tentacle`" --server $octopusServerUrl --environment $environment $roles --name $env:COMPUTERNAME --publicHostName $ipAddress --apiKey $apiKey --comms-style TentaclePassive --force --console"
+                Invoke-Expression $cmd | Write-Host
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed on register-with"
+                }
+
+                & .\tentacle.exe service --instance "Tentacle" --install --start --console | Write-Host
+                if ($lastExitCode -ne 0) {
+                  throw "Installation failed on service install"
+                }
+
+                Write-Output "Tentacle commands complete"
+              }
+
+              # Set Environment Variable for ASP.NET CORE
+              [Environment]::SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "$registerInEnvironments", "Machine")
+
+              # Install tentacle now ...
+              Install-Tentacle -apikey $octopusApiKey -octopusServerUrl $octopusServerUrl -environment $registerInEnvironments -roles $registerInRoles
+              </powershell>
+  WebElasticIp:
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: vpc
+        InstanceId: !Ref WebInstance
+Outputs:
+  VPCID:
+    Value: !Ref VPC
+    Description: VPC ID
+  SubnetAID:
+    Value: !Ref SubnetA
+    Description: Subnet A ID
+  PublicIp:
+    Value:
+      Fn::GetAtt:
+      - WebInstance
+      - PublicIp
+    Description: Server's PublicIp Address
+  WebEndpoint:
+    Description: Web instance endpoint
+    Value:
+      Fn::GetAtt:
+      - WebInstance
+      - PublicDnsName

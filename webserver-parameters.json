@@ -1,0 +1,38 @@
+[
+  {
+    "ParameterKey": "KeyPair",
+    "ParameterValue": "#{AWS.CloudFormation.KeyPair}"
+  },
+  {
+    "ParameterKey": "WebInstanceId",
+    "ParameterValue": "#{AWS.CloudFormation.WebInstanceId}"
+  },
+  {
+    "ParameterKey": "WebInstanceName",
+    "ParameterValue": "WebInstance-#{Octopus.Environment.Name}"
+  },
+  {
+    "ParameterKey": "WebInstanceTypeParameter",
+    "ParameterValue": "t2.large"
+  },
+  {
+    "ParameterKey": "AvailabilityZone1Parameter",
+    "ParameterValue": "#{AWS.CloudFormation.AvailabilityZone1}"
+  },
+  {
+    "ParameterKey": "AvailabilityZone2Parameter",
+    "ParameterValue": "#{AWS.CloudFormation.AvailabilityZone2}"
+  },
+  {
+    "ParameterKey": "DatabaseName",
+    "ParameterValue": "#{OctoFx.DatabaseName}"
+  },
+  {
+    "ParameterKey": "DatabaseUsername",
+    "ParameterValue": "#{OctoFx.DatabaseUser}"
+  },
+  {
+    "ParameterKey": "DatabasePassword",
+    "ParameterValue": "#{OctoFx.DatabasePassword}"
+  }
+]
