@@ -1,11 +1,11 @@
 [
   {
     "ParameterKey": "KeyPair",
-    "ParameterValue": "OctopusDemoOregon"
+    "ParameterValue": "#{AWS.CloudFormation.KeyPair}"
   },
   {
     "ParameterKey": "WebInstanceId",
-    "ParameterValue": "#{WebInstanceId}"
+    "ParameterValue": "#{AWS.CloudFormation.WebInstanceId}"
   },
   {
     "ParameterKey": "WebInstanceName",
@@ -17,22 +17,22 @@
   },
   {
     "ParameterKey": "AvailabilityZone1Parameter",
-    "ParameterValue": "#{AvailabilityZone1}"
+    "ParameterValue": "#{AWS.CloudFormation.AvailabilityZone1}"
   },
   {
     "ParameterKey": "AvailabilityZone2Parameter",
-    "ParameterValue": "#{AvailabilityZone2}"
+    "ParameterValue": "#{AWS.CloudFormation.AvailabilityZone2}"
   },
   {
     "ParameterKey": "DatabaseName",
-    "ParameterValue": "#{DatabaseName}"
+    "ParameterValue": "#{OctoFx.DatabaseName}"
   },
   {
     "ParameterKey": "DatabaseUsername",
-    "ParameterValue": "#{DatabaseUser}"
+    "ParameterValue": "#{OctoFx.DatabaseUser}"
   },
   {
     "ParameterKey": "DatabasePassword",
-    "ParameterValue": "#{DatabasePassword}"
+    "ParameterValue": "#{OctoFx.DatabasePassword}"
   }
 ]
