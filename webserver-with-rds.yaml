@@ -3,7 +3,7 @@ Parameters:
   KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
   WebInstanceId:
-    Tyle: String
+    Type: String
     Default: ami-f3dcbc8b
   WebInstanceName:
     Type: String
